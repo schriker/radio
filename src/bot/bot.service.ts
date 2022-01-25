@@ -1,23 +1,26 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-const dayjs = require('dayjs');
+import { Queue } from 'bull';
 import { ParsedIrcMessage } from 'src/poorchat/interfaces/poorchat.interface';
 import { Poorchat } from 'src/poorchat/poorchat';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
+import { CreatedMessage } from './interfaces/bot.interface';
 const ora = require('ora');
 const chalk = require('chalk');
 
 @Injectable()
 export class BotService {
   private readonly client: Poorchat;
+  private job: boolean;
 
   constructor(
     private configService: ConfigService,
     private youtubeService: YoutubeService,
-    private supabaseService: SupabaseService,
+    @InjectQueue('message') private readonly messageQueue: Queue,
   ) {
+    this.job = false;
     this.client = new Poorchat({
       websocket: this.configService.get<string>('IRC_WS'),
       irc: this.configService.get<string>('IRC'),
@@ -42,7 +45,7 @@ export class BotService {
     });
   }
 
-  messageCreator = (IRCMessage: ParsedIrcMessage) => {
+  messageCreator = (IRCMessage: ParsedIrcMessage): CreatedMessage => {
     const messageBody = IRCMessage.params[1];
     const messageChannel = IRCMessage.params[0];
     let subscription = 0;
@@ -94,41 +97,17 @@ export class BotService {
 
     try {
       if (this.youtubeService.validateLink(link)) {
-        const data = await this.youtubeService.getData(link);
-        if (data.lengthSeconds > 1800) {
-          this.client.pm(message.author, 'Maksymalna długość utworu to 30min.');
-          return;
-        }
-
-        let startTime = dayjs();
-        let endTime = dayjs().add(data.lengthSeconds, 'second');
-        const lastSong = await this.supabaseService.getLastSong();
-        const lastSongs = await this.supabaseService.getLastSongs();
-
-        if (lastSongs.length) {
-          if (lastSongs.some((video) => video.videoId === data.videoId)) {
-            this.client.pm(
-              message.author,
-              `Utwór był niedawno odtwarzany lub jest w kolejce. Prosze dodaj coś innego.`,
-            );
-            return;
-          }
-        }
-
-        if (lastSong.length && dayjs(lastSong[0].endTime).isAfter(dayjs())) {
-          startTime = dayjs(lastSong[0].endTime);
-          endTime = dayjs(startTime).add(data.lengthSeconds, 'second');
-        }
-
-        await this.supabaseService.saveSong({
-          ...data,
-          user: message.author,
-          userColor: message.color,
-          startTime,
-          endTime,
+        this.client.pm(message.author, 'Pobieram...');
+        const job = await this.messageQueue.add('addSong', {
+          link: link,
+          message: message,
         });
-
-        this.client.pm(message.author, `Utwór został dodany: "${data.title}".`);
+        if (!this.job) {
+          job.queue.on('progress', (_, data) => {
+            this.client.pm(data.author, data.message);
+          });
+          this.job = true;
+        }
       } else {
         // Try Other Comands
       }

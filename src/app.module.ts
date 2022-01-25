@@ -6,9 +6,16 @@ import { BotService } from './bot/bot.service';
 import { SongsModule } from './songs/songs.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { YoutubeModule } from './youtube/youtube.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
     BotModule,
     ConfigModule.forRoot({ isGlobal: true }),
     SongsModule,
