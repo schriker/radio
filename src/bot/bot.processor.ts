@@ -16,7 +16,8 @@ export class BotProcessor {
   @Process('addSong')
   async addSong(job: Job<{ link: string; message: CreatedMessage }>) {
     const data = await this.youtubeService.getData(job.data.link);
-    if (data.lengthSeconds > 1800 || data.lengthSeconds === 0) {
+    console.log(data);
+    if (data.lengthSeconds > 1800 || `${data.lengthSeconds}` === '0') {
       job.progress({
         author: job.data.message.author,
         message: 'Maksymalna długość utworu to 30min.',
