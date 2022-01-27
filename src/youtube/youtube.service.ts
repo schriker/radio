@@ -8,7 +8,7 @@ export class YoutubeService {
     const match = link.match(
       /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/,
     );
-    if (match) {
+    if (match && !match.includes('/embed/')) {
       return true;
     } else {
       return false;
