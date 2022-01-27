@@ -129,12 +129,14 @@ export class BotService {
             }
           }
           this.client.pm(message.author, 'Zagłosowałeś za pominięciem utworu.');
+          break;
         }
         case 'delete': {
           if (isAdmin) {
             await this.supabaseService.deleteSong(parseInt(isComand[2]));
-            this.client.pm(message.author, 'Utwór został usuniety.');
+            this.client.pm(message.author, 'Utwór został usunięty.');
           }
+          break;
         }
         default:
           return;
