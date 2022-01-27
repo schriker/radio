@@ -43,7 +43,7 @@ export class YoutubeService {
         thumbnail,
       };
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   }
 }
