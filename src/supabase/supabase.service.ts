@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Song } from 'src/songs/interfaces/songs.interface';
+import { Song } from 'src/supabase/interfaces/songs.interface';
+import { runInThisContext } from 'vm';
+import { Admin } from './interfaces/admin.interface';
 const { createClient } = require('@supabase/supabase-js');
 const dayjs = require('dayjs');
 
@@ -14,6 +16,78 @@ export class SupabaseService {
       this.configService.get<string>('DB_URL'),
       this.configService.get<string>('DB_SECRET'),
     );
+  }
+
+  async getAdmins(): Promise<Admin[]> {
+    const admins = await this.client.from('admins').select('*');
+    return admins.data;
+  }
+
+  async skipSong(): Promise<void> {
+    const [currentSong, ...songs] = await this.getCurrentPlaylist();
+    await this.client.from('songs').delete().match({ id: currentSong.id });
+
+    if (!songs) return;
+
+    const updatedSongs = songs.reduce<Song[]>(
+      (prevValue, currentSong, index) => {
+        return [
+          ...prevValue,
+          {
+            ...currentSong,
+            startTime:
+              index === 0 ? dayjs() : dayjs(prevValue[index - 1].endTime),
+            endTime:
+              index === 0
+                ? dayjs().add(currentSong.lengthSeconds, 'second')
+                : dayjs(dayjs(prevValue[index - 1].endTime)).add(
+                    currentSong.lengthSeconds,
+                    'second',
+                  ),
+          },
+        ];
+      },
+      [],
+    );
+
+    await this.client.from('songs').upsert(updatedSongs);
+  }
+
+  async deleteSong(id: number): Promise<void> {
+    const songs = await this.client
+      .from('songs')
+      .select('*')
+      .gte('id', id)
+      .order('id', { ascending: true });
+
+    const [songToDelete, ...rest]: Song[] = songs.data;
+
+    await this.client.from('songs').delete().match({ id: songToDelete.id });
+
+    if (!songs) return;
+
+    const updatedSongs = rest.reduce<Song[]>(
+      (prevValue, currentSong, index) => {
+        return [
+          ...prevValue,
+          {
+            ...currentSong,
+            startTime:
+              index === 0 ? dayjs() : dayjs(prevValue[index - 1].endTime),
+            endTime:
+              index === 0
+                ? dayjs().add(currentSong.lengthSeconds, 'second')
+                : dayjs(dayjs(prevValue[index - 1].endTime)).add(
+                    currentSong.lengthSeconds,
+                    'second',
+                  ),
+          },
+        ];
+      },
+      [],
+    );
+
+    await this.client.from('songs').upsert(updatedSongs);
   }
 
   async getLastSong(): Promise<Song[]> {
@@ -30,9 +104,20 @@ export class SupabaseService {
     const lastSongs = await this.client
       .from('songs')
       .select('*')
-      .gte('startTime', dayjs().subtract(60, 'minute'));
+      .gte('startTime', dayjs().subtract(60, 'minute'))
+      .order('id', { ascending: true });
 
     return lastSongs.data;
+  }
+
+  async getCurrentPlaylist(): Promise<Song[]> {
+    const playlist = await this.client
+      .from('songs')
+      .select('*')
+      .gt('endTime', dayjs().toISOString())
+      .order('id', { ascending: true });
+
+    return playlist.data;
   }
 
   async saveSong(song: Song): Promise<boolean> {

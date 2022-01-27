@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { InjectQueue } from '@nestjs/bull';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
 import { ParsedIrcMessage } from 'src/poorchat/interfaces/poorchat.interface';
 import { Poorchat } from 'src/poorchat/poorchat';
+import { Admin } from 'src/supabase/interfaces/admin.interface';
+import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 const ora = require('ora');
@@ -13,14 +15,21 @@ const chalk = require('chalk');
 @Injectable()
 export class BotService {
   private readonly client: Poorchat;
+  private readonly logger = new Logger(BotService.name);
   private job: boolean;
+  private admins: Admin[];
+  private skipsArray: string[] = [];
+  private skipingSong: boolean;
+  private numberToskip: number;
 
   constructor(
     private configService: ConfigService,
     private youtubeService: YoutubeService,
+    private supabaseService: SupabaseService,
     @InjectQueue('message') private readonly messageQueue: Queue,
   ) {
     this.job = false;
+    this.numberToskip = 5;
     this.client = new Poorchat({
       websocket: this.configService.get<string>('IRC_WS'),
       irc: this.configService.get<string>('IRC'),
@@ -91,10 +100,52 @@ export class BotService {
     return messageData;
   };
 
+  async skipSong() {
+    this.skipingSong = true;
+    await this.supabaseService.skipSong();
+    this.skipingSong = false;
+    this.skipsArray = [];
+  }
+
+  async handleCommand(message: CreatedMessage) {
+    const isAdmin = this.admins.some((admin) => admin.name === message.author);
+    const isComand = message.body.trim().match(/^\!(\b\w+\b)(\s+\b\d+\b)?/);
+
+    if (isComand) {
+      switch (isComand[1]) {
+        case 'skip': {
+          if (this.skipingSong) {
+            this.client.pm(message.author, 'Pomijam utwór...');
+            return;
+          }
+          if (isAdmin) {
+            this.skipSong();
+          } else {
+            if (!this.skipsArray.includes(message.author)) {
+              this.skipsArray.push(message.author);
+            }
+            if (this.skipsArray.length > this.numberToskip) {
+              this.skipSong();
+            }
+          }
+          this.client.pm(message.author, 'Zagłosowałeś za pominięciem utworu.');
+        }
+        case 'delete': {
+          if (isAdmin) {
+            await this.supabaseService.deleteSong(parseInt(isComand[2]));
+            this.client.pm(message.author, 'Utwór został usuniety.');
+          }
+        }
+        default:
+          return;
+      }
+    }
+  }
+
   async messageHandler(IRCmessage: ParsedIrcMessage) {
     const message = this.messageCreator(IRCmessage);
     const link = message.body.trim().split(' ')[0].trim();
-
+    this.logger.log(`${message.author}: ${message.body}`);
     try {
       if (this.youtubeService.validateLink(link)) {
         this.client.pm(message.author, 'Pobieram...');
@@ -109,7 +160,7 @@ export class BotService {
           this.job = true;
         }
       } else {
-        // Try Other Comands
+        this.handleCommand(message);
       }
     } catch (error) {
       console.log(error);
@@ -119,7 +170,8 @@ export class BotService {
 
   async run() {
     await this.client.connect();
-    ora(chalk.black.bgYellow('[IRC]: Listening')).start();
+    this.admins = await this.supabaseService.getAdmins();
+    ora(chalk.black.bgYellow('[IRC]: Listening \n')).start();
     this.client.on('priv', this.messageHandler.bind(this));
   }
 }

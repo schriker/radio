@@ -7,6 +7,7 @@ export interface Thumbnail {
 }
 
 export interface Song {
+  id?: number;
   author: string;
   title: string;
   lengthSeconds: number;
