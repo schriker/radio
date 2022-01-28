@@ -131,6 +131,9 @@ export class BotService {
 
             if (!this.skipsArray.includes(message.author)) {
               this.skipsArray.push(message.author);
+              this.logger.log(
+                `${message.author} skipuje: ${currentSong[0].title}`,
+              );
             }
             if (this.skipsArray.length > this.numberToskip) {
               this.skipSong();

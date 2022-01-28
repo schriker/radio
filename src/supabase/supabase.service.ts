@@ -103,6 +103,7 @@ export class SupabaseService {
     const lastSong = await this.client
       .from('songs')
       .select('*')
+      .gt('endTime', dayjs().toISOString())
       .order('id', { ascending: true })
       .limit(1);
 
