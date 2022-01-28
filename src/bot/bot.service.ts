@@ -19,6 +19,7 @@ export class BotService {
   private job: boolean;
   private admins: Admin[];
   private skipsArray: string[] = [];
+  private currentSongId = 0;
   private skipingSong: boolean;
   private numberToskip: number;
 
@@ -121,6 +122,13 @@ export class BotService {
           if (isAdmin) {
             this.skipSong();
           } else {
+            const currentSong = await this.supabaseService.getCurrentSong();
+
+            if (currentSong[0].id !== this.currentSongId) {
+              this.currentSongId = currentSong[0].id;
+              this.skipsArray = [];
+            }
+
             if (!this.skipsArray.includes(message.author)) {
               this.skipsArray.push(message.author);
             }
