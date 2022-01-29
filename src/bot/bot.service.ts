@@ -131,8 +131,14 @@ export class BotService {
 
             if (!this.skipsArray.includes(message.author)) {
               this.skipsArray.push(message.author);
-              this.supabaseService.saveNotification(
-                `${message.author} zagłosował za pominięciem utworu.`,
+              await this.messageQueue.add(
+                'sendNotification',
+                {
+                  notification: `${message.author} zagłosował za pominięciem utworu.`,
+                },
+                {
+                  delay: 2000,
+                },
               );
               this.logger.log(
                 `${message.author} skipuje: ${currentSong[0].title}`,
@@ -173,10 +179,16 @@ export class BotService {
           return;
         }
         this.client.pm(message.author, 'Pobieram...');
-        const job = await this.messageQueue.add('addSong', {
-          link: link,
-          message: message,
-        });
+        const job = await this.messageQueue.add(
+          'addSong',
+          {
+            link: link,
+            message: message,
+          },
+          {
+            delay: 2000,
+          },
+        );
         if (!this.job) {
           job.queue.on('progress', (_, data) => {
             this.client.pm(data.author, data.message);

@@ -68,4 +68,13 @@ export class BotProcessor {
       // console.log(error);
     }
   }
+
+  @Process('sendNotification')
+  async sendNotification(job: Job<{ notification: string }>) {
+    try {
+      await this.supabaseService.saveNotification(job.data.notification);
+    } catch (error) {
+      // console.log(error);
+    }
+  }
 }
