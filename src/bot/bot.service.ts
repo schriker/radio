@@ -164,6 +164,14 @@ export class BotService {
     this.logger.log(`${message.author}: ${message.body}`);
     try {
       if (this.youtubeService.validateLink(link)) {
+        const lastSongs = await this.supabaseService.getLastFiveSongs();
+        if (lastSongs.every((song) => song.user === message.author)) {
+          this.client.pm(
+            message.author,
+            'Możesz dodać max. 5 utworów pod rząd.',
+          );
+          return;
+        }
         this.client.pm(message.author, 'Pobieram...');
         const job = await this.messageQueue.add('addSong', {
           link: link,

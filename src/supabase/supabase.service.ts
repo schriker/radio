@@ -99,6 +99,16 @@ export class SupabaseService {
     return lastSong.data;
   }
 
+  async getLastFiveSongs(): Promise<Song[]> {
+    const lastSong = await this.client
+      .from('songs')
+      .select('user')
+      .order('id', { ascending: false })
+      .limit(5);
+
+    return lastSong.data;
+  }
+
   async getCurrentSong(): Promise<Song[]> {
     const lastSong = await this.client
       .from('songs')
