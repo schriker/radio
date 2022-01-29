@@ -131,6 +131,9 @@ export class BotService {
 
             if (!this.skipsArray.includes(message.author)) {
               this.skipsArray.push(message.author);
+              this.supabaseService.saveNotification(
+                `${message.author} zagłosował za pominięciem utworu.`,
+              );
               this.logger.log(
                 `${message.author} skipuje: ${currentSong[0].title}`,
               );
@@ -140,9 +143,6 @@ export class BotService {
             }
           }
           this.client.pm(message.author, 'Zagłosowałeś za pominięciem utworu.');
-          this.supabaseService.saveNotification(
-            `${message.author} zagłosował za pominięciem utworu.`,
-          );
           break;
         }
         case 'delete': {
