@@ -139,4 +139,14 @@ export class SupabaseService {
 
     return true;
   }
+
+  async saveNotification(notification: string): Promise<void> {
+    const savedNotification = await this.client
+      .from('notifications')
+      .insert([{ text: notification }]);
+
+    if (savedNotification.error) {
+      throw new Error(savedNotification.error.message);
+    }
+  }
 }

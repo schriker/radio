@@ -140,6 +140,9 @@ export class BotService {
             }
           }
           this.client.pm(message.author, 'Zagłosowałeś za pominięciem utworu.');
+          this.supabaseService.saveNotification(
+            `${message.author} zagłosował za pominięciem utworu.`,
+          );
           break;
         }
         case 'delete': {
