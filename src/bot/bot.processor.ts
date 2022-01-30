@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
+import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
@@ -11,6 +12,7 @@ export class BotProcessor {
   constructor(
     private youtubeService: YoutubeService,
     private supabaseService: SupabaseService,
+    private rateLimiterService: RateLimiterService,
   ) {}
 
   @Process('addSong')
@@ -53,17 +55,27 @@ export class BotProcessor {
         endTime = dayjs(startTime).add(data.lengthSeconds, 'second');
       }
 
-      await this.supabaseService.saveSong({
-        ...data,
-        user: job.data.message.author,
-        userColor: job.data.message.color,
-        startTime,
-        endTime,
-      });
-      job.progress({
-        author: job.data.message.author,
-        message: `Utwór został dodany: "${data.title}".`,
-      });
+      this.rateLimiterService
+        .songLimit(job.data.message.author)
+        .then(async () => {
+          await this.supabaseService.saveSong({
+            ...data,
+            user: job.data.message.author,
+            userColor: job.data.message.color,
+            startTime,
+            endTime,
+          });
+          job.progress({
+            author: job.data.message.author,
+            message: `Utwór został dodany: "${data.title}".`,
+          });
+        })
+        .catch(() => {
+          job.progress({
+            author: job.data.message.author,
+            message: `Przekroczyłeś limit utworów. Max 10 utworów w ciagu 2h.`,
+          });
+        });
     } catch (error) {
       // console.log(error);
     }
