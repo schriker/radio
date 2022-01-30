@@ -6,6 +6,7 @@ import { BotService } from './bot/bot.service';
 import { SupabaseModule } from './supabase/supabase.module';
 import { YoutubeModule } from './youtube/youtube.module';
 import { BullModule } from '@nestjs/bull';
+import { RateLimiterModule } from './rate-limiter/rate-limiter.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BullModule } from '@nestjs/bull';
     ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
     YoutubeModule,
+    RateLimiterModule,
   ],
   providers: [AppService, BotService],
 })

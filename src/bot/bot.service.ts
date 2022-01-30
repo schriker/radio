@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
 import { ParsedIrcMessage } from 'src/poorchat/interfaces/poorchat.interface';
 import { Poorchat } from 'src/poorchat/poorchat';
+import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
 import { Admin } from 'src/supabase/interfaces/admin.interface';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
@@ -14,7 +15,7 @@ const chalk = require('chalk');
 
 @Injectable()
 export class BotService {
-  private readonly client: Poorchat;
+  public readonly client: Poorchat;
   private readonly logger = new Logger(BotService.name);
   private job: boolean;
   private admins: Admin[];
@@ -27,6 +28,7 @@ export class BotService {
     private configService: ConfigService,
     private youtubeService: YoutubeService,
     private supabaseService: SupabaseService,
+    private rateLimiterService: RateLimiterService,
     @InjectQueue('message') private readonly messageQueue: Queue,
   ) {
     this.job = false;
@@ -170,6 +172,7 @@ export class BotService {
     this.logger.log(`${message.author}: ${message.body}`);
     try {
       if (this.youtubeService.validateLink(link)) {
+        await this.rateLimiterService.songLimit(message.author);
         const lastSongs = await this.supabaseService.getLastFiveSongs();
         if (lastSongs.every((song) => song.user === message.author)) {
           this.client.pm(
@@ -200,7 +203,9 @@ export class BotService {
       }
     } catch (error) {
       console.log(error);
-      this.client.pm(message.author, 'Coś poszło nie tak :(');
+      if (typeof error === 'string') {
+        this.client.pm(message.author, error);
+      }
     }
   }
 

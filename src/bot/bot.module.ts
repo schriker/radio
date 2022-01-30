@@ -5,6 +5,7 @@ import { YoutubeModule } from 'src/youtube/youtube.module';
 import { BotService } from './bot.service';
 import { BullModule } from '@nestjs/bull';
 import { BotProcessor } from './bot.processor';
+import { RateLimiterModule } from 'src/rate-limiter/rate-limiter.module';
 
 @Module({
   imports: [
@@ -14,8 +15,9 @@ import { BotProcessor } from './bot.processor';
     ConfigModule,
     YoutubeModule,
     SupabaseModule,
+    RateLimiterModule,
   ],
-  exports: [BullModule],
+  exports: [BullModule, BotService],
   providers: [BotService, BotProcessor],
 })
 export class BotModule {}
