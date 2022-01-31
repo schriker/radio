@@ -6,23 +6,40 @@ const { RateLimiterRedis } = require('rate-limiter-flexible');
 
 @Injectable()
 export class RateLimiterService {
-  private client: typeof RateLimiterRedis;
+  private songRateLimiter: typeof RateLimiterRedis;
+  private skipRateLimiter: typeof RateLimiterRedis;
 
   constructor() {
-    this.client = new RateLimiterRedis({
+    this.songRateLimiter = new RateLimiterRedis({
+      kekeyPrefix: 'rlflxsongd',
       storeClient: redisClient,
       points: 10,
       duration: 60 * 60 * 2,
+    });
+
+    this.skipRateLimiter = new RateLimiterRedis({
+      kekeyPrefix: 'rlflxskips',
+      storeClient: redisClient,
+      points: 10,
+      duration: 60 * 60 * 1,
     });
   }
 
   async songLimit(user: string) {
     try {
-      await this.client.consume(user);
+      await this.songRateLimiter.consume(user);
     } catch (error) {
       throw new Error(
         'Przekroczyłeś limit utworów. Max 10 utworów w ciagu 2h.',
       );
+    }
+  }
+
+  async skipLimit(user: string) {
+    try {
+      await this.songRateLimiter.consume(user);
+    } catch (error) {
+      throw new Error('Przekroczyłeś limit. Max 10 w ciagu 1h.');
     }
   }
 }
