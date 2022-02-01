@@ -11,14 +11,14 @@ export class RateLimiterService {
 
   constructor() {
     this.songRateLimiter = new RateLimiterRedis({
-      kekeyPrefix: 'rlflxsongd',
+      keyPrefix: 'rlflxsongd',
       storeClient: redisClient,
       points: 10,
       duration: 60 * 60 * 2,
     });
 
     this.skipRateLimiter = new RateLimiterRedis({
-      kekeyPrefix: 'rlflxskips',
+      keyPrefix: 'rlflxskips',
       storeClient: redisClient,
       points: 10,
       duration: 60 * 60 * 1,
