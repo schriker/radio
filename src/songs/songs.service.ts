@@ -10,7 +10,7 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 export class SongsService {
   constructor(
     @InjectRepository(Song)
-    private readonly songsRepository: Repository<Song>,
+    private songsRepository: Repository<Song>,
     @Inject('PUB_SUB')
     private pubSub: RedisPubSub,
   ) {}

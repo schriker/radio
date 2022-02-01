@@ -12,15 +12,20 @@ import { SongsModule } from './songs/songs.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 import { PubSubModule } from './pub-sub/pub-sub.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    BullModule.forRoot({
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: parseInt(configService.get<string>('REDIS_PORT')),
+        },
+      }),
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -45,9 +50,9 @@ import { PubSubModule } from './pub-sub/pub-sub.module';
     GraphQLModule.forRoot({
       installSubscriptionHandlers: true,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      subscriptions: {
-        'graphql-ws': true,
-      },
+      // subscriptions: {
+      //   'graphql-ws': true,
+      // },
       sortSchema: true,
     }),
     BotModule,
@@ -56,6 +61,7 @@ import { PubSubModule } from './pub-sub/pub-sub.module';
     RateLimiterModule,
     SongsModule,
     PubSubModule,
+    NotificationsModule,
   ],
   providers: [AppService, BotService],
 })

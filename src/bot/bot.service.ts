@@ -15,7 +15,7 @@ import { SongsService } from 'src/songs/songs.service';
 @Injectable()
 export class BotService {
   public readonly client: Poorchat;
-  private readonly logger = new Logger(BotService.name);
+  private logger = new Logger(BotService.name);
   private job: boolean;
   private admins: Admin[];
   private skipsArray: string[] = [];
@@ -28,7 +28,7 @@ export class BotService {
     private youtubeService: YoutubeService,
     private songsService: SongsService,
     private rateLimiterService: RateLimiterService,
-    @InjectQueue('message') private readonly messageQueue: Queue,
+    @InjectQueue('song') private songQueue: Queue,
   ) {
     this.job = false;
     this.numberToskip = 5;
@@ -115,47 +115,50 @@ export class BotService {
 
     if (isComand) {
       switch (isComand[1]) {
+        case 'next': {
+          if (isAdmin) {
+            this.skipSong();
+          }
+          break;
+        }
         case 'skip': {
           if (this.skipingSong) {
             this.client.pm(message.author, 'Pomijam utwór...');
             return;
           }
-          if (isAdmin) {
+          try {
+            await this.rateLimiterService.skipLimit(message.author);
+          } catch (error) {
+            this.client.pm(
+              message.author,
+              'Przekroczyłeś limit. Max 10 w ciagu 1h.',
+            );
+          }
+          const currentSong = await this.songsService.current();
+
+          if (!currentSong) {
+            this.client.pm(message.author, 'Nic teraz nie gramy :(');
+            return;
+          }
+
+          if (currentSong[0].id !== this.currentSongId) {
+            this.currentSongId = currentSong[0].id;
+            this.skipsArray = [];
+          }
+
+          if (!this.skipsArray.includes(message.author)) {
+            this.skipsArray.push(message.author);
+            await this.songQueue.add('sendNotification', {
+              notification: {
+                text: `${message.author} zagłosował za pominięciem utworu.`,
+              },
+            });
+            this.logger.log(
+              `${message.author} skipuje: ${currentSong[0].title}`,
+            );
+          }
+          if (this.skipsArray.length > this.numberToskip) {
             this.skipSong();
-          } else {
-            try {
-              await this.rateLimiterService.skipLimit(message.author);
-            } catch (error) {
-              this.client.pm(
-                message.author,
-                'Przekroczyłeś limit. Max 10 w ciagu 1h.',
-              );
-            }
-            const currentSong = await this.songsService.current();
-
-            if (currentSong[0].id !== this.currentSongId) {
-              this.currentSongId = currentSong[0].id;
-              this.skipsArray = [];
-            }
-
-            if (!this.skipsArray.includes(message.author)) {
-              this.skipsArray.push(message.author);
-              await this.messageQueue.add(
-                'sendNotification',
-                {
-                  notification: `${message.author} zagłosował za pominięciem utworu.`,
-                },
-                {
-                  delay: 2000,
-                },
-              );
-              this.logger.log(
-                `${message.author} skipuje: ${currentSong[0].title}`,
-              );
-            }
-            if (this.skipsArray.length > this.numberToskip) {
-              this.skipSong();
-            }
           }
           this.client.pm(message.author, 'Zagłosowałeś za pominięciem utworu.');
           break;
@@ -180,7 +183,7 @@ export class BotService {
     try {
       if (this.youtubeService.validateLink(link)) {
         this.client.pm(message.author, 'Pobieram...');
-        const job = await this.messageQueue.add(
+        const job = await this.songQueue.add(
           'addSong',
           {
             link: link,

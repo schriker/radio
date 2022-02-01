@@ -7,17 +7,19 @@ import { BullModule } from '@nestjs/bull';
 import { BotProcessor } from './bot.processor';
 import { RateLimiterModule } from 'src/rate-limiter/rate-limiter.module';
 import { SongsModule } from 'src/songs/songs.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'message',
+      name: 'song',
     }),
     ConfigModule,
     YoutubeModule,
     SupabaseModule,
     RateLimiterModule,
     SongsModule,
+    NotificationsModule,
   ],
   exports: [BullModule, BotService],
   providers: [BotService, BotProcessor],

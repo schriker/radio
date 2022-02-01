@@ -7,7 +7,7 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 @Resolver(() => Song)
 export class SongsResolver {
   constructor(
-    private readonly songsService: SongsService,
+    private songsService: SongsService,
     @Inject('PUB_SUB')
     private pubSub: RedisPubSub,
   ) {}

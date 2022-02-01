@@ -6,9 +6,8 @@ import * as ora from 'ora';
 import * as chalk from 'chalk';
 
 async function bootstrap() {
-  const bot = await NestFactory.createApplicationContext(AppModule);
   const app = await NestFactory.create(AppModule);
-  const botService = bot.get(AppService);
+  const botService = app.get(AppService);
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   await app.listen(4000);
   ora(
@@ -16,7 +15,6 @@ async function bootstrap() {
       `[APP]: Application is running on: ${await app.getUrl()}`,
     ),
   ).succeed();
-
   botService.start();
 }
 bootstrap();

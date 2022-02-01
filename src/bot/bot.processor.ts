@@ -1,16 +1,19 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import * as dayjs from 'dayjs';
+import { Notification } from 'src/notifications/dto/notification';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
 import { SongsService } from 'src/songs/songs.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 
-@Processor('message')
+@Processor('song')
 export class BotProcessor {
   constructor(
     private youtubeService: YoutubeService,
     private songsService: SongsService,
+    private notificationsService: NotificationsService,
     private rateLimiterService: RateLimiterService,
   ) {}
 
@@ -19,7 +22,7 @@ export class BotProcessor {
     try {
       const data = await this.youtubeService.getData(job.data.link);
       if (!data) {
-        job.progress({
+        await job.progress({
           author: job.data.message.author,
           message: `Tylko bezpośrednie linki do YouTube. Sprawdź poprawność linku.`,
         });
@@ -27,7 +30,7 @@ export class BotProcessor {
       }
 
       if (data.lengthSeconds > 1800 || `${data.lengthSeconds}` === '0') {
-        job.progress({
+        await job.progress({
           author: job.data.message.author,
           message: 'Maksymalna długość utworu to 30min.',
         });
@@ -39,7 +42,7 @@ export class BotProcessor {
         lastSongsLimit.length >= 5 &&
         lastSongsLimit.every((song) => song.user === job.data.message.author)
       ) {
-        job.progress({
+        await job.progress({
           author: job.data.message.author,
           message: 'Możesz dodać max. 5 utworów pod rząd.',
         });
@@ -53,7 +56,7 @@ export class BotProcessor {
 
       if (lastSongs.length) {
         if (lastSongs.some((video) => video.videoId === data.videoId)) {
-          job.progress({
+          await job.progress({
             author: job.data.message.author,
             message: `Utwór był niedawno odtwarzany lub jest w kolejce. Prosze dodaj coś innego.`,
           });
@@ -76,13 +79,13 @@ export class BotProcessor {
             startTime: startTime as unknown as Date,
             endTime: endTime as unknown as Date,
           });
-          job.progress({
+          await job.progress({
             author: job.data.message.author,
             message: `Utwór został dodany: "${data.title}".`,
           });
         })
-        .catch(() => {
-          job.progress({
+        .catch(async () => {
+          await job.progress({
             author: job.data.message.author,
             message: `Przekroczyłeś limit utworów. Max 10 utworów w ciagu 2h.`,
           });
@@ -93,9 +96,9 @@ export class BotProcessor {
   }
 
   @Process('sendNotification')
-  async sendNotification(job: Job<{ notification: string }>) {
+  async sendNotification(job: Job<{ notification: Notification }>) {
     try {
-      // TODO Handle Notifications
+      this.notificationsService.create(job.data.notification);
     } catch (error) {
       console.log(error);
     }
