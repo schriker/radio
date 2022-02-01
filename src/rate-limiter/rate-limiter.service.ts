@@ -37,7 +37,7 @@ export class RateLimiterService {
 
   async skipLimit(user: string) {
     try {
-      await this.songRateLimiter.consume(user);
+      await this.skipRateLimiter.consume(user);
     } catch (error) {
       throw new Error('Przekroczyłeś limit. Max 10 w ciagu 1h.');
     }
