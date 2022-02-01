@@ -1,10 +1,16 @@
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Inject } from '@nestjs/common';
+import { Args, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { Song } from './entity/song.entity';
 import { SongsService } from './songs.service';
+import { RedisPubSub } from 'graphql-redis-subscriptions';
 
 @Resolver(() => Song)
 export class SongsResolver {
-  constructor(private readonly songsService: SongsService) {}
+  constructor(
+    private readonly songsService: SongsService,
+    @Inject('PUB_SUB')
+    private pubSub: RedisPubSub,
+  ) {}
 
   @Query(() => [Song])
   songs(): Promise<Song[]> {
@@ -16,5 +22,10 @@ export class SongsResolver {
     @Args('endTime', { nullable: true }) endTime?: string,
   ): Promise<Song[]> {
     return this.songsService.history(endTime);
+  }
+
+  @Subscription(() => Song)
+  songAdded() {
+    return this.pubSub.asyncIterator('songAdded');
   }
 }

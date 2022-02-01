@@ -18,11 +18,15 @@ type Song {
   createdAt: DateTime!
   endTime: DateTime!
   id: Int!
-  lengthSecond: Float!
+  lengthSeconds: Float!
   startTime: DateTime!
   title: String!
   user: String!
   userColor: String!
   videoId: String!
   viewCount: Float!
+}
+
+type Subscription {
+  songAdded: Song!
 }

@@ -6,11 +6,11 @@ import { ParsedIrcMessage } from 'src/poorchat/interfaces/poorchat.interface';
 import { Poorchat } from 'src/poorchat/poorchat';
 import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
 import { Admin } from 'src/supabase/interfaces/admin.interface';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 import * as ora from 'ora';
 import * as chalk from 'chalk';
+import { SongsService } from 'src/songs/songs.service';
 
 @Injectable()
 export class BotService {
@@ -26,7 +26,7 @@ export class BotService {
   constructor(
     private configService: ConfigService,
     private youtubeService: YoutubeService,
-    private supabaseService: SupabaseService,
+    private songsService: SongsService,
     private rateLimiterService: RateLimiterService,
     @InjectQueue('message') private readonly messageQueue: Queue,
   ) {
@@ -104,7 +104,7 @@ export class BotService {
 
   async skipSong() {
     this.skipingSong = true;
-    await this.supabaseService.skipSong();
+    await this.songsService.skip();
     this.skipingSong = false;
     this.skipsArray = [];
   }
@@ -131,7 +131,7 @@ export class BotService {
                 'Przekroczyłeś limit. Max 10 w ciagu 1h.',
               );
             }
-            const currentSong = await this.supabaseService.getCurrentSong();
+            const currentSong = await this.songsService.current();
 
             if (currentSong[0].id !== this.currentSongId) {
               this.currentSongId = currentSong[0].id;
@@ -162,7 +162,7 @@ export class BotService {
         }
         case 'delete': {
           if (isAdmin) {
-            await this.supabaseService.deleteSong(parseInt(isComand[2]));
+            // TODO Write method to delete single song
             this.client.pm(message.author, 'Utwór został usunięty.');
           }
           break;
@@ -179,14 +179,6 @@ export class BotService {
     this.logger.log(`${message.author}: ${message.body}`);
     try {
       if (this.youtubeService.validateLink(link)) {
-        const lastSongs = await this.supabaseService.getLastFiveSongs();
-        if (lastSongs.every((song) => song.user === message.author)) {
-          this.client.pm(
-            message.author,
-            'Możesz dodać max. 5 utworów pod rząd.',
-          );
-          return;
-        }
         this.client.pm(message.author, 'Pobieram...');
         const job = await this.messageQueue.add(
           'addSong',
@@ -217,7 +209,8 @@ export class BotService {
 
   async run() {
     await this.client.connect();
-    this.admins = await this.supabaseService.getAdmins();
+    // TODO Store admins in database
+    this.admins = [{ name: 'schriker' }];
     ora(chalk.black.bgYellow('[IRC]: Listening \n')).start();
     this.client.on('priv', this.messageHandler.bind(this));
   }

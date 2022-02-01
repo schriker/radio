@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SongsModule } from './songs/songs.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
+import { PubSubModule } from './pub-sub/pub-sub.module';
 
 @Module({
   imports: [
@@ -44,6 +45,9 @@ import { join } from 'path';
     GraphQLModule.forRoot({
       installSubscriptionHandlers: true,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      subscriptions: {
+        'graphql-ws': true,
+      },
       sortSchema: true,
     }),
     BotModule,
@@ -51,6 +55,7 @@ import { join } from 'path';
     YoutubeModule,
     RateLimiterModule,
     SongsModule,
+    PubSubModule,
   ],
   providers: [AppService, BotService],
 })

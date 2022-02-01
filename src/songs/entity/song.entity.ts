@@ -1,4 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Dayjs } from 'dayjs';
 import {
   Column,
   CreateDateColumn,
@@ -27,7 +28,7 @@ export class Song {
 
   @Field()
   @Column()
-  lengthSecond: number;
+  lengthSeconds: number;
 
   @Field()
   @Column()

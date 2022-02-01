@@ -2,7 +2,7 @@ import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import * as dayjs from 'dayjs';
 import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
-import { SupabaseService } from 'src/supabase/supabase.service';
+import { SongsService } from 'src/songs/songs.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 
@@ -10,7 +10,7 @@ import { CreatedMessage } from './interfaces/bot.interface';
 export class BotProcessor {
   constructor(
     private youtubeService: YoutubeService,
-    private supabaseService: SupabaseService,
+    private songsService: SongsService,
     private rateLimiterService: RateLimiterService,
   ) {}
 
@@ -34,10 +34,22 @@ export class BotProcessor {
         return;
       }
 
+      const lastSongsLimit = await this.songsService.last(5);
+      if (
+        lastSongsLimit.length >= 5 &&
+        lastSongsLimit.every((song) => song.user === job.data.message.author)
+      ) {
+        job.progress({
+          author: job.data.message.author,
+          message: 'Możesz dodać max. 5 utworów pod rząd.',
+        });
+        return;
+      }
+
       let startTime = dayjs();
       let endTime = dayjs().add(data.lengthSeconds, 'second');
-      const lastSong = await this.supabaseService.getLastSong();
-      const lastSongs = await this.supabaseService.getLastSongs();
+      const lastSong = await this.songsService.last(1);
+      const lastSongs = await this.songsService.last60min();
 
       if (lastSongs.length) {
         if (lastSongs.some((video) => video.videoId === data.videoId)) {
@@ -57,12 +69,12 @@ export class BotProcessor {
       this.rateLimiterService
         .songLimit(job.data.message.author)
         .then(async () => {
-          await this.supabaseService.saveSong({
+          await this.songsService.create({
             ...data,
             user: job.data.message.author,
             userColor: job.data.message.color,
-            startTime,
-            endTime,
+            startTime: startTime as unknown as Date,
+            endTime: endTime as unknown as Date,
           });
           job.progress({
             author: job.data.message.author,
@@ -76,16 +88,16 @@ export class BotProcessor {
           });
         });
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   }
 
   @Process('sendNotification')
   async sendNotification(job: Job<{ notification: string }>) {
     try {
-      await this.supabaseService.saveNotification(job.data.notification);
+      // TODO Handle Notifications
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   }
 }

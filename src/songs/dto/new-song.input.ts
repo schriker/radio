@@ -9,7 +9,7 @@ export class NewSongInput {
   title: string;
 
   @Field()
-  lengthSecond: number;
+  lengthSeconds: number;
 
   @Field()
   videoId: string;
