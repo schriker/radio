@@ -9,9 +9,12 @@ import { BullModule } from '@nestjs/bull';
 import { RateLimiterModule } from './rate-limiter/rate-limiter.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SongsModule } from './songs/songs.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { join } from 'path';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRoot({
       redis: {
         host: 'localhost',
@@ -38,8 +41,12 @@ import { SongsModule } from './songs/songs.module';
       }),
       inject: [ConfigService],
     }),
+    GraphQLModule.forRoot({
+      installSubscriptionHandlers: true,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+    }),
     BotModule,
-    ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
     YoutubeModule,
     RateLimiterModule,
