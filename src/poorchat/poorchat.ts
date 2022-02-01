@@ -4,11 +4,12 @@ import {
   PoorchatOptions,
   PoorchatProperties,
 } from './interfaces/poorchat.interface';
-const ora = require('ora');
-const chalk = require('chalk');
-const WebSocket = require('ws');
+import * as ora from 'ora';
+import * as chalk from 'chalk';
+import * as WebSocket from 'ws';
+import * as parse from 'irc-message';
+import * as EventEmitter from 'events';
 const parse = require('irc-message').parse;
-const EventEmitter = require('events');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 export class Poorchat extends EventEmitter {

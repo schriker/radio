@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Injectable } from '@nestjs/common';
 const Redis = require('ioredis');
-const redisClient = new Redis({ enableOfflineQueue: false });
+export const redisClient = new Redis({ enableOfflineQueue: false });
 const { RateLimiterRedis } = require('rate-limiter-flexible');
 
 @Injectable()
@@ -11,7 +11,7 @@ export class RateLimiterService {
 
   constructor() {
     this.songRateLimiter = new RateLimiterRedis({
-      keyPrefix: 'rlflxsongd',
+      keyPrefix: 'rlflxsongs',
       storeClient: redisClient,
       points: 10,
       duration: 60 * 60 * 2,

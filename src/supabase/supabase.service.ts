@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Song } from 'src/supabase/interfaces/songs.interface';
 import { Admin } from './interfaces/admin.interface';
-const { createClient } = require('@supabase/supabase-js');
-const dayjs = require('dayjs');
+import { createClient } from '@supabase/supabase-js';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class SupabaseService {

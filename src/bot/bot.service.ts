@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,8 +9,8 @@ import { Admin } from 'src/supabase/interfaces/admin.interface';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
-const ora = require('ora');
-const chalk = require('chalk');
+import * as ora from 'ora';
+import * as chalk from 'chalk';
 
 @Injectable()
 export class BotService {

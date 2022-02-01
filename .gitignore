@@ -1,5 +1,7 @@
 # my
 .env
+pdata
+ormconfig.json
 # compiled output
 /dist
 /node_modules

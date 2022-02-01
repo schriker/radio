@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
+import * as dayjs from 'dayjs';
 import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
-const dayjs = require('dayjs');
 
 @Processor('message')
 export class BotProcessor {

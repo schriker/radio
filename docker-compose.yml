@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  databse:
+    image: postgres:14.1-alpine
+    environment:
+      POSTGRES_USER: nest
+      POSTGRES_PASSWORD: nest
+      POSTGRES_DB: nest
+      LANG: pl_PL.utf8
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./pdata/:/var/lib/postgresql/data
