@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const botService = app.get(AppService);
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  await app.listen(4000);
+  await app.listen(4001);
   ora(
     chalk.black.bgGreen(`[APP]: Running on: ${await app.getUrl()}`),
   ).succeed();
