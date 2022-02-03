@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
-import { Notification } from './dto/notification';
+import { NewNotificationInput } from './dto/new-notification.input';
 
 @Injectable()
 export class NotificationsService {
@@ -9,7 +9,7 @@ export class NotificationsService {
     private pubSub: RedisPubSub,
   ) {}
 
-  async create(notification: Notification): Promise<void> {
+  async create(notification: NewNotificationInput): Promise<void> {
     this.pubSub.publish('newNotification', {
       newNotification: notification,
     });

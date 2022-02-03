@@ -11,9 +11,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   await app.listen(4000);
   ora(
-    chalk.black.bgGreen(
-      `[APP]: Application is running on: ${await app.getUrl()}`,
-    ),
+    chalk.black.bgGreen(`[APP]: Running on: ${await app.getUrl()}`),
   ).succeed();
   botService.start();
 }

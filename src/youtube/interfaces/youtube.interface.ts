@@ -1,4 +1,4 @@
-import { Thumbnail } from 'src/supabase/interfaces/songs.interface';
+import { Thumbnail } from './thumbnail.interface';
 
 export interface YouTubeVideo {
   author: string;

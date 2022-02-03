@@ -1,16 +1,16 @@
 import { Resolver, Subscription } from '@nestjs/graphql';
-import { Notification } from './dto/notification';
+import { NewNotificationInput } from './dto/new-notification.input';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { Inject } from '@nestjs/common';
 
-@Resolver(() => Notification)
+@Resolver(() => NewNotificationInput)
 export class NotificationsResolver {
   constructor(
     @Inject('PUB_SUB')
     private pubSub: RedisPubSub,
   ) {}
 
-  @Subscription(() => Notification)
+  @Subscription(() => NewNotificationInput)
   newNotification() {
     return this.pubSub.asyncIterator('newNotification');
   }

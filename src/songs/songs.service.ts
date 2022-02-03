@@ -20,6 +20,9 @@ export class SongsService {
       where: {
         endTime: MoreThan(dayjs().toISOString()),
       },
+      order: {
+        startTime: 'ASC',
+      },
     });
   }
 
@@ -28,26 +31,29 @@ export class SongsService {
       where: {
         endTime: endTime ? LessThan(endTime) : LessThan(dayjs().toISOString()),
       },
-      take: 100,
+      take: 50,
       order: {
-        id: 'DESC',
+        startTime: 'DESC',
       },
     });
   }
 
-  async current(): Promise<Song> {
+  async current(): Promise<Song[]> {
     return this.songsRepository.find({
+      where: {
+        endTime: MoreThan(dayjs().toISOString()),
+      },
       order: {
-        id: 'DESC',
+        startTime: 'ASC',
       },
       take: 1,
-    })[0];
+    });
   }
 
   async last(take: number): Promise<Song[]> {
     return this.songsRepository.find({
       order: {
-        id: 'DESC',
+        startTime: 'DESC',
       },
       take: take,
     });
@@ -67,7 +73,12 @@ export class SongsService {
 
       await this.songsRepository.delete(songToDelete.id);
 
-      if (!songs.length) return true;
+      if (!songs.length) {
+        this.pubSub.publish('songSkipped', {
+          songSkipped: songToDelete,
+        });
+        return true;
+      }
 
       const updatedSongs = songs.reduce<Song[]>(
         (prevValue, currentSong, index) => {
@@ -96,6 +107,9 @@ export class SongsService {
       );
 
       await this.songsRepository.save(updatedSongs);
+      this.pubSub.publish('songSkipped', {
+        songSkipped: songToDelete,
+      });
       return true;
     } catch (error) {
       console.log(error);
@@ -105,6 +119,7 @@ export class SongsService {
 
   async create(newSongData: NewSongInput): Promise<Song> {
     const song = await this.songsRepository.save(newSongData);
+
     this.pubSub.publish('songAdded', {
       songAdded: song,
     });

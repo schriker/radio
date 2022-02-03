@@ -28,4 +28,9 @@ export class SongsResolver {
   songAdded() {
     return this.pubSub.asyncIterator('songAdded');
   }
+
+  @Subscription(() => Song)
+  songSkipped() {
+    return this.pubSub.asyncIterator('songSkipped');
+  }
 }

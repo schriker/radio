@@ -25,21 +25,21 @@ export class RateLimiterService {
     });
   }
 
-  async songLimit(user: string) {
-    try {
-      await this.songRateLimiter.consume(user);
-    } catch (error) {
-      throw new Error(
-        'Przekroczyłeś limit utworów. Max 10 utworów w ciagu 2h.',
-      );
-    }
+  async songLimit(user: string): Promise<boolean> {
+    return new Promise(async (resolve) => {
+      this.songRateLimiter
+        .consume(user)
+        .then(() => resolve(false))
+        .catch(() => resolve(true));
+    });
   }
 
-  async skipLimit(user: string) {
-    try {
-      await this.skipRateLimiter.consume(user);
-    } catch (error) {
-      throw new Error('Przekroczyłeś limit. Max 10 w ciagu 1h.');
-    }
+  async skipLimit(user: string): Promise<boolean> {
+    return new Promise(async (resolve) => {
+      this.skipRateLimiter
+        .consume(user)
+        .then(() => resolve(false))
+        .catch(() => resolve(true));
+    });
   }
 }

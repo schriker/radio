@@ -1,23 +1,21 @@
-import { InjectQueue } from '@nestjs/bull';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bull';
 import { ParsedIrcMessage } from 'src/poorchat/interfaces/poorchat.interface';
 import { Poorchat } from 'src/poorchat/poorchat';
 import { RateLimiterService } from 'src/rate-limiter/rate-limiter.service';
-import { Admin } from 'src/supabase/interfaces/admin.interface';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 import * as ora from 'ora';
 import * as chalk from 'chalk';
 import { SongsService } from 'src/songs/songs.service';
+import { BotJobsService } from './bot-jobs.service';
+import Bottleneck from 'bottleneck';
 
 @Injectable()
 export class BotService {
   public readonly client: Poorchat;
   private logger = new Logger(BotService.name);
-  private job: boolean;
-  private admins: Admin[];
+  private admins: string[];
   private skipsArray: string[] = [];
   private currentSongId = 0;
   private skipingSong: boolean;
@@ -28,9 +26,10 @@ export class BotService {
     private youtubeService: YoutubeService,
     private songsService: SongsService,
     private rateLimiterService: RateLimiterService,
-    @InjectQueue('song') private songQueue: Queue,
+    private botJobsService: BotJobsService,
+    @Inject('BOTTLENECK')
+    private bottleneck: Bottleneck,
   ) {
-    this.job = false;
     this.numberToskip = 5;
     this.client = new Poorchat({
       websocket: this.configService.get<string>('IRC_WS'),
@@ -110,7 +109,7 @@ export class BotService {
   }
 
   async handleCommand(message: CreatedMessage) {
-    const isAdmin = this.admins.some((admin) => admin.name === message.author);
+    const isAdmin = this.admins.includes(message.author);
     const isComand = message.body.trim().match(/^\!(\b\w+\b)(\s+\b\d+\b)?/);
 
     if (isComand) {
@@ -118,6 +117,17 @@ export class BotService {
         case 'next': {
           if (isAdmin) {
             this.skipSong();
+          }
+          break;
+        }
+        case 'say': {
+          if (isAdmin) {
+            const text = message.body.split(' ').slice(1).join(' ');
+            if (text) {
+              this.botJobsService.sendNotification({
+                text: text,
+              });
+            }
           }
           break;
         }
@@ -136,7 +146,7 @@ export class BotService {
           }
           const currentSong = await this.songsService.current();
 
-          if (!currentSong) {
+          if (currentSong.length === 0) {
             this.client.pm(message.author, 'Nic teraz nie gramy :(');
             return;
           }
@@ -148,10 +158,8 @@ export class BotService {
 
           if (!this.skipsArray.includes(message.author)) {
             this.skipsArray.push(message.author);
-            await this.songQueue.add('sendNotification', {
-              notification: {
-                text: `${message.author} zagłosował za pominięciem utworu.`,
-              },
+            this.botJobsService.sendNotification({
+              text: `${message.author} zagłosował za pominięciem utworu.`,
             });
             this.logger.log(
               `${message.author} skipuje: ${currentSong[0].title}`,
@@ -183,22 +191,10 @@ export class BotService {
     try {
       if (this.youtubeService.validateLink(link)) {
         this.client.pm(message.author, 'Pobieram...');
-        const job = await this.songQueue.add(
-          'addSong',
-          {
-            link: link,
-            message: message,
-          },
-          {
-            delay: 2000,
-          },
+        const result = await this.bottleneck.schedule(() =>
+          this.botJobsService.addSong(link, message),
         );
-        if (!this.job) {
-          job.queue.on('progress', (_, data) => {
-            this.client.pm(data.author, data.message);
-          });
-          this.job = true;
-        }
+        this.client.pm('schriker', result as string);
       } else {
         this.handleCommand(message);
       }
@@ -213,7 +209,7 @@ export class BotService {
   async run() {
     await this.client.connect();
     // TODO Store admins in database
-    this.admins = [{ name: 'schriker' }];
+    this.admins = ['schriker'];
     ora(chalk.black.bgYellow('[IRC]: Listening \n')).start();
     this.client.on('priv', this.messageHandler.bind(this));
   }
