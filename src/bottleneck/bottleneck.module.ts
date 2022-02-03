@@ -7,17 +7,11 @@ import Bottleneck from 'bottleneck';
     {
       provide: 'BOTTLENECK',
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
+      useFactory: () => {
         return new Bottleneck({
           id: 'radio',
           maxConcurrent: 1,
           minTime: 3000,
-          datastore: 'ioredis',
-          clearDatastore: false,
-          clientOptions: {
-            host: configService.get<string>('REDIS_HOST'),
-            port: parseInt(configService.get<string>('REDIS_PORT')),
-          },
         });
       },
     },

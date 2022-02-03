@@ -18,7 +18,7 @@ export class NewSongInput {
   channelId: string;
 
   @Field()
-  viewCount: number;
+  viewCount: string;
 
   @Field()
   user: string;

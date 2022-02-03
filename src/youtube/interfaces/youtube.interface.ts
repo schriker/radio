@@ -6,7 +6,7 @@ export interface YouTubeVideo {
   lengthSeconds: number;
   videoId: string;
   channelId: string;
-  viewCount: number;
+  viewCount: string;
   thumbnail: {
     thumbnails: Thumbnail[];
   };

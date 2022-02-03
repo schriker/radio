@@ -40,7 +40,7 @@ export class Song {
 
   @Field()
   @Column()
-  viewCount: number;
+  viewCount: string;
 
   @Field()
   @Column()

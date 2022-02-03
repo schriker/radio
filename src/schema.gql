@@ -26,7 +26,7 @@ type Song {
   user: String!
   userColor: String!
   videoId: String!
-  viewCount: Float!
+  viewCount: String!
 }
 
 type Subscription {
