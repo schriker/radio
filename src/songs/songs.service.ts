@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
-import { LessThan, MoreThan, MoreThanOrEqual, Repository } from 'typeorm';
+import { MoreThan, MoreThanOrEqual, Repository } from 'typeorm';
 import { NewSongInput } from './dto/new-song.input';
 import { Song } from './entity/song.entity';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
@@ -132,9 +132,19 @@ export class SongsService {
   async create(newSongData: NewSongInput): Promise<Song> {
     const song = await this.songsRepository.save(newSongData);
 
+    const count = await this.songsRepository
+      .createQueryBuilder('song')
+      .where('song.videoId = :value', { value: song.videoId })
+      .select('COUNT(DISTINCT song.id)', 'count')
+      .getRawOne();
+
     this.pubSub.publish('songAdded', {
-      songAdded: song,
+      songAdded: {
+        ...song,
+        count: count.count,
+      },
     });
+
     return song;
   }
 }
