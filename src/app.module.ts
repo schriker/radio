@@ -40,6 +40,7 @@ import { BottleneckModule } from './bottleneck/bottleneck.module';
     GraphQLModule.forRoot({
       installSubscriptionHandlers: true,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      playground: false,
       sortSchema: true,
     }),
     BotModule,

@@ -137,12 +137,18 @@ export class BotService {
             return;
           }
           try {
-            await this.rateLimiterService.skipLimit(message.author);
-          } catch (error) {
-            this.client.pm(
+            const limit = await this.rateLimiterService.skipLimit(
               message.author,
-              'Przekroczyłeś limit. Max 10 w ciagu 1h.',
             );
+            if (limit) {
+              this.client.pm(
+                message.author,
+                'Przekroczyłeś limit. Max 10 w ciagu 1h.',
+              );
+              return;
+            }
+          } catch (error) {
+            console.log(error);
           }
           const currentSong = await this.songsService.current();
 
@@ -194,7 +200,7 @@ export class BotService {
         const result = await this.bottleneck.schedule(() =>
           this.botJobsService.addSong(link, message),
         );
-        this.client.pm('schriker', result as string);
+        this.client.pm(message.author, result as string);
       } else {
         this.handleCommand(message);
       }
