@@ -17,6 +17,7 @@ type Query {
 type Song {
   author: String!
   channelId: String!
+  count: Float
   createdAt: Date!
   endTime: Date!
   id: Int!

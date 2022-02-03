@@ -16,26 +16,38 @@ export class SongsService {
   ) {}
 
   async songs(): Promise<Song[]> {
-    return this.songsRepository.find({
-      where: {
-        endTime: MoreThan(dayjs().toISOString()),
-      },
-      order: {
-        startTime: 'ASC',
-      },
-    });
+    return await this.songsRepository
+      .createQueryBuilder('song')
+      .where('song.endTime > :value', { value: dayjs().toISOString() })
+      .orderBy('song.startTime', 'ASC')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(DISTINCT song_count.id)')
+          .from(Song, 'song_count')
+          .where('song_count.videoId = song.videoId');
+      }, 'song_count')
+
+      .groupBy('song.id')
+      .getMany();
   }
 
   async history(endTime?: string): Promise<Song[]> {
-    return this.songsRepository.find({
-      where: {
-        endTime: endTime ? LessThan(endTime) : LessThan(dayjs().toISOString()),
-      },
-      take: 50,
-      order: {
-        startTime: 'DESC',
-      },
-    });
+    return await this.songsRepository
+      .createQueryBuilder('song')
+      .where('song.endTime < :value', {
+        value: endTime ? endTime : dayjs().toISOString(),
+      })
+      .orderBy('song.startTime', 'DESC')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(DISTINCT song_count.id)')
+          .from(Song, 'song_count')
+          .where('song_count.videoId = song.videoId');
+      }, 'song_count')
+
+      .groupBy('song.id')
+      .take(50)
+      .getMany();
   }
 
   async current(): Promise<Song[]> {

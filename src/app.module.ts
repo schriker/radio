@@ -32,6 +32,7 @@ import { BottleneckModule } from './bottleneck/bottleneck.module';
         cli: {
           migrationsDir: 'migration',
         },
+        logging: false,
         synchronize: false,
         keepConnectionAlive: true,
       }),

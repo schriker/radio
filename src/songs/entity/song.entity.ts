@@ -57,4 +57,8 @@ export class Song {
   @Field()
   @Column({ type: 'timestamptz' })
   endTime: Date;
+
+  @Field({ nullable: true })
+  @Column({ select: false, insert: false, readonly: true, nullable: true })
+  count: number;
 }

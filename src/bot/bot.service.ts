@@ -165,7 +165,7 @@ export class BotService {
           if (!this.skipsArray.includes(message.author)) {
             this.skipsArray.push(message.author);
             this.botJobsService.sendNotification({
-              text: `No. - ${this.skipsArray.length} ${message.author} zagłosował za pominięciem utworu.`,
+              text: `No. ${this.skipsArray.length} ${message.author} zagłosował za pominięciem utworu.`,
             });
             this.logger.log(
               `${message.author} skipuje: ${currentSong[0].title}`,
