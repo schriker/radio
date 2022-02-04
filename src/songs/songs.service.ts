@@ -5,6 +5,7 @@ import { MoreThan, MoreThanOrEqual, Repository } from 'typeorm';
 import { NewSongInput } from './dto/new-song.input';
 import { Song } from './entity/song.entity';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
+import { SongHistoryInput } from './dto/song-history.input';
 
 @Injectable()
 export class SongsService {
@@ -31,11 +32,16 @@ export class SongsService {
       .getMany();
   }
 
-  async history(endTime?: string): Promise<Song[]> {
+  async history({ endTime, user }: SongHistoryInput): Promise<Song[]> {
+    const where = user
+      ? 'song.endTime < :value AND song.user ilike :user'
+      : 'song.endTime < :value';
+
     return await this.songsRepository
       .createQueryBuilder('song')
-      .where('song.endTime < :value', {
+      .where(where, {
         value: endTime ? endTime : dayjs().toISOString(),
+        user: `${user}%`,
       })
       .orderBy('song.startTime', 'DESC')
       .addSelect((subQuery) => {

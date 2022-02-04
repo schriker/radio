@@ -3,6 +3,7 @@ import { Args, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { Song } from './entity/song.entity';
 import { SongsService } from './songs.service';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
+import { SongHistoryInput } from './dto/song-history.input';
 
 @Resolver(() => Song)
 export class SongsResolver {
@@ -19,9 +20,10 @@ export class SongsResolver {
 
   @Query(() => [Song])
   songsHistory(
-    @Args('endTime', { nullable: true }) endTime?: string,
+    @Args('songHistoryInput', { nullable: true })
+    songHistoryInput?: SongHistoryInput,
   ): Promise<Song[]> {
-    return this.songsService.history(endTime);
+    return this.songsService.history(songHistoryInput);
   }
 
   @Subscription(() => Song)

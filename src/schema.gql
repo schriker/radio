@@ -11,7 +11,7 @@ type NewNotificationInput {
 
 type Query {
   songs: [Song!]!
-  songsHistory(endTime: String): [Song!]!
+  songsHistory(songHistoryInput: SongHistoryInput): [Song!]!
 }
 
 type Song {
@@ -28,6 +28,11 @@ type Song {
   userColor: String!
   videoId: String!
   viewCount: String!
+}
+
+input SongHistoryInput {
+  endTime: String
+  user: String
 }
 
 type Subscription {
