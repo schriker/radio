@@ -53,7 +53,7 @@ export class BotJobsService {
       const limit = await this.rateLimiterService.songLimit(message.author);
 
       if (limit) {
-        return `Przekroczyłeś limit utworów. Max 10 utworów w ciagu 2h.`;
+        return `Przekroczyłeś limit utworów. Max 15 utworów w ciagu 2h.`;
       }
 
       await this.songsService.create({
