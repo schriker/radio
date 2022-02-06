@@ -10,6 +10,7 @@ import * as chalk from 'chalk';
 import { SongsService } from 'src/songs/songs.service';
 import { BotJobsService } from './bot-jobs.service';
 import Bottleneck from 'bottleneck';
+import { Interval } from '@nestjs/schedule';
 
 @Injectable()
 export class BotService {
@@ -211,6 +212,17 @@ export class BotService {
       if (typeof error === 'string') {
         this.client.pm(message.author, error);
       }
+    }
+  }
+
+  @Interval(30000)
+  async fillEmptyPlaylist() {
+    const result = await this.bottleneck.schedule(() =>
+      this.botJobsService.getRandomSong(),
+    );
+
+    if (!result) {
+      this.fillEmptyPlaylist();
     }
   }
 

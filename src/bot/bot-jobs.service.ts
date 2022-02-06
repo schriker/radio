@@ -6,7 +6,6 @@ import { YoutubeService } from 'src/youtube/youtube.service';
 import { CreatedMessage } from './interfaces/bot.interface';
 import * as dayjs from 'dayjs';
 import { NewNotificationInput } from 'src/notifications/dto/new-notification.input';
-import { Interval } from '@nestjs/schedule';
 import { BotService } from './bot.service';
 
 @Injectable()
@@ -91,8 +90,7 @@ export class BotJobsService {
     }
   }
 
-  @Interval(30000)
-  async fillEmptyPlaylist() {
+  async getRandomSong(): Promise<boolean> {
     try {
       const message: CreatedMessage = {
         author: 'RadioPancernik',
@@ -107,12 +105,11 @@ export class BotJobsService {
       };
 
       const playlist = await this.songsService.songs();
-      if (playlist[1]) return;
+      if (playlist[1]) return true;
 
       const randomSong = await this.songsService.random();
       if (randomSong.lengthSeconds < 60) {
-        this.fillEmptyPlaylist();
-        return;
+        return false;
       }
 
       const result = await this.addSong(
@@ -120,9 +117,10 @@ export class BotJobsService {
         message,
       );
       this.logger.log(result);
+      return true;
     } catch (error) {
       console.log(error);
-      this.fillEmptyPlaylist();
+      return false;
     }
   }
 }
