@@ -13,10 +13,12 @@ import { PubSubModule } from './pub-sub/pub-sub.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DateScalar } from './scalars/date.scalar';
 import { BottleneckModule } from './bottleneck/bottleneck.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

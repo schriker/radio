@@ -6,6 +6,7 @@ import { NewSongInput } from './dto/new-song.input';
 import { Song } from './entity/song.entity';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { SongHistoryInput } from './dto/song-history.input';
+import { getRandomIntInclusive } from 'src/utils/random';
 
 @Injectable()
 export class SongsService {
@@ -30,6 +31,26 @@ export class SongsService {
 
       .groupBy('song.id')
       .getMany();
+  }
+
+  async random(): Promise<Song> {
+    const count = await this.songsRepository.count();
+    const randomId = getRandomIntInclusive(1, count);
+
+    return await this.songsRepository
+      .createQueryBuilder('song')
+      .where('song.id > :id', {
+        id: randomId,
+      })
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(DISTINCT song_count.id)')
+          .from(Song, 'song_count')
+          .where('song_count.videoId = song.videoId');
+      }, 'song_count')
+
+      .groupBy('song.id')
+      .getOne();
   }
 
   async history({ endTime, user }: SongHistoryInput): Promise<Song[]> {

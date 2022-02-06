@@ -15,7 +15,7 @@ import Bottleneck from 'bottleneck';
 export class BotService {
   public readonly client: Poorchat;
   private logger = new Logger(BotService.name);
-  private admins: string[];
+  public admins: string[];
   private skipsArray: string[] = [];
   private currentSongId = 0;
   private skipingSong: boolean;
@@ -31,6 +31,8 @@ export class BotService {
     private bottleneck: Bottleneck,
   ) {
     this.numberToskip = 5;
+    // TODO Store admins in database
+    this.admins = ['schriker', 'RadioPancernik'];
     this.client = new Poorchat({
       websocket: this.configService.get<string>('IRC_WS'),
       irc: this.configService.get<string>('IRC'),
@@ -214,8 +216,6 @@ export class BotService {
 
   async run() {
     await this.client.connect();
-    // TODO Store admins in database
-    this.admins = ['schriker'];
     ora(chalk.black.bgYellow('[IRC]: Listening \n')).start();
     this.client.on('priv', this.messageHandler.bind(this));
   }
