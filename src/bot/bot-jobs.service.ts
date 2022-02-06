@@ -27,9 +27,9 @@ export class BotJobsService {
         return 'Maksymalna długość utworu to 30min.';
       }
 
-      const lastSongsLimit = await this.songsService.last(5);
+      const lastSongsLimit = await this.songsService.last(10);
       if (
-        lastSongsLimit.length >= 5 &&
+        lastSongsLimit.length >= 10 &&
         lastSongsLimit.every((song) => song.user === message.author)
       ) {
         return 'Możesz dodać max. 5 utworów pod rząd.';

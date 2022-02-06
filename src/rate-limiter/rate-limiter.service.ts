@@ -13,7 +13,7 @@ export class RateLimiterService {
     this.songRateLimiter = new RateLimiterRedis({
       keyPrefix: 'rlflxsongs',
       storeClient: redisClient,
-      points: 10,
+      points: 15,
       duration: 60 * 60 * 2,
     });
 
