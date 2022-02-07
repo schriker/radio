@@ -36,10 +36,9 @@ export class SongsService {
   async random(): Promise<Song> {
     const count = await this.songsRepository.count();
     const randomId = getRandomIntInclusive(1, count);
-
     return await this.songsRepository
       .createQueryBuilder('song')
-      .where('song.id > :id', {
+      .where('song.id = :id', {
         id: randomId,
       })
       .addSelect((subQuery) => {
@@ -48,7 +47,6 @@ export class SongsService {
           .from(Song, 'song_count')
           .where('song_count.videoId = song.videoId');
       }, 'song_count')
-
       .groupBy('song.id')
       .getOne();
   }

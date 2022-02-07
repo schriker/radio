@@ -11,6 +11,8 @@ import { SongsService } from 'src/songs/songs.service';
 import { BotJobsService } from './bot-jobs.service';
 import Bottleneck from 'bottleneck';
 import { Interval } from '@nestjs/schedule';
+import axios from 'axios';
+import { Channel } from './interfaces/channel.interface';
 
 @Injectable()
 export class BotService {
@@ -168,7 +170,9 @@ export class BotService {
           if (!this.skipsArray.includes(message.author)) {
             this.skipsArray.push(message.author);
             this.botJobsService.sendNotification({
-              text: `No. ${this.skipsArray.length} ${message.author} zagłosował za pominięciem utworu.`,
+              text: `No. ${this.skipsArray.length}/${this.numberToskip + 1} ${
+                message.author
+              } zagłosował za pominięciem utworu.`,
             });
             this.logger.log(
               `${message.author} skipuje: ${currentSong[0].title}`,
@@ -230,5 +234,31 @@ export class BotService {
     await this.client.connect();
     ora(chalk.black.bgYellow('[IRC]: Listening \n')).start();
     this.client.on('priv', this.messageHandler.bind(this));
+  }
+
+  @Interval(600000)
+  async updateSkipsNumber() {
+    try {
+      const { data } = await axios.get('https://pancernik.info/');
+      const jsonData = JSON.parse(
+        data
+          .split('<script id="__NEXT_DATA__" type="application/json">')
+          .pop()
+          .split('</script></body></html>')[0],
+      );
+
+      const [channelInfo]: Channel[] =
+        jsonData.props.pageProps.initialState.channels.filter(
+          (channel: Channel) => channel.id === 'radio',
+        );
+      const viewersNumber = channelInfo.watch.viewers;
+
+      this.numberToskip =
+        Math.ceil((viewersNumber * 20) / 100) < 3
+          ? 3
+          : Math.ceil((viewersNumber * 20) / 100);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
