@@ -23,6 +23,7 @@ export class YoutubeService {
         .pop()
         .split(';</script>')[0];
       const pageMetadataObject = JSON.parse(pageMetadata);
+
       const {
         author,
         title,
@@ -41,9 +42,10 @@ export class YoutubeService {
         channelId,
         viewCount,
         thumbnail,
+        playabilityStatus: pageMetadataObject.playabilityStatus.status,
       };
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   }
 }

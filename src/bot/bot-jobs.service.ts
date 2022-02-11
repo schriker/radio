@@ -23,6 +23,9 @@ export class BotJobsService {
   async addSong(link: string, message: CreatedMessage): Promise<string> {
     try {
       const data = await this.youtubeService.getData(link);
+      if (data.playabilityStatus !== 'OK') {
+        return `To video ma nałożone ograniczenia wiekowe.`;
+      }
       const isAdmin = this.botService.admins.includes(message.author);
       if (!data) {
         return `Tylko bezpośrednie linki do YouTube. Sprawdź poprawność linku.`;
@@ -108,6 +111,9 @@ export class BotJobsService {
       if (playlist[1]) return true;
 
       const randomSong = await this.songsService.random();
+      if (!randomSong) {
+        return false;
+      }
       if (randomSong.lengthSeconds < 60) {
         return false;
       }

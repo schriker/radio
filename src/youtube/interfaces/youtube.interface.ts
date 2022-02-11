@@ -7,6 +7,7 @@ export interface YouTubeVideo {
   videoId: string;
   channelId: string;
   viewCount: string;
+  playabilityStatus: string;
   thumbnail: {
     thumbnails: Thumbnail[];
   };
