@@ -4,20 +4,20 @@ import { YouTubeVideo } from './interfaces/youtube.interface';
 
 @Injectable()
 export class YoutubeService {
-  validateLink(link: string): boolean {
+  validateLink(link: string): false | string {
     const match = link.match(
-      /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/,
+      /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be|music.youtube\.com))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/,
     );
     if (match && !match.includes('/embed/')) {
-      return true;
+      return match[5];
     } else {
       return false;
     }
   }
 
-  async getData(link: string): Promise<YouTubeVideo> {
+  async getData(id: string): Promise<YouTubeVideo> {
     try {
-      const page = await axios.get(link);
+      const page = await axios.get(`https://www.youtube.com/watch?v=${id}`);
       const pageMetadata = page.data
         .split('ytInitialPlayerResponse = ')
         .pop()

@@ -118,10 +118,7 @@ export class BotJobsService {
         return false;
       }
 
-      const result = await this.addSong(
-        `https://www.youtube.com/watch?v=${randomSong.videoId}`,
-        message,
-      );
+      const result = await this.addSong(randomSong.videoId, message);
       this.logger.log(result);
       return true;
     } catch (error) {

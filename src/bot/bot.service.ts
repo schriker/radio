@@ -202,10 +202,11 @@ export class BotService {
     const link = message.body.trim().split(' ')[0].trim();
     this.logger.log(`${message.author}: ${message.body}`);
     try {
-      if (this.youtubeService.validateLink(link)) {
+      const videoId = this.youtubeService.validateLink(link);
+      if (videoId) {
         this.client.pm(message.author, 'Pobieram...');
         const result = await this.bottleneck.schedule(() =>
-          this.botJobsService.addSong(link, message),
+          this.botJobsService.addSong(videoId, message),
         );
         this.client.pm(message.author, result as string);
       } else {
