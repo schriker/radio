@@ -1,13 +1,39 @@
 version: '3.9'
 services:
-  databse:
+  main:
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 4001:4001
+      - 9229:9229
+    command: bash -c "npm run typeorm migration:run && npm run start:dev"
+    env_file:
+      - .env
+    networks:
+      - webnet
+    depends_on:
+      - redis
+      - database
+  database:
     image: postgres:14.1-alpine
     environment:
-      POSTGRES_USER: nest
-      POSTGRES_PASSWORD: nest
-      POSTGRES_DB: nest
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
       LANG: pl_PL.utf8
     ports:
       - '5432:5432'
     volumes:
       - ./pdata/:/var/lib/postgresql/data
+    networks:
+      - webnet
+  redis:
+    image: redis:6.2.6-alpine
+    networks:
+      - webnet
+networks:
+  webnet:

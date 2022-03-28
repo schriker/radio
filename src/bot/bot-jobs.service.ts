@@ -40,10 +40,10 @@ export class BotJobsService {
       if (!isAdmin) {
         const lastSongsLimit = await this.songsService.last(10);
         if (
-          lastSongsLimit.length >= 10 &&
+          lastSongsLimit.length >= 20 &&
           lastSongsLimit.every((song) => song.user === message.author)
         ) {
-          return 'Możesz dodać max. 10 utworów pod rząd.';
+          return 'Możesz dodać max. 20 utworów pod rząd.';
         }
       }
 
