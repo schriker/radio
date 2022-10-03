@@ -114,7 +114,7 @@ export class BotJobsService {
       if (!randomSong) {
         return false;
       }
-      if (randomSong.lengthSeconds < 60) {
+      if (randomSong.lengthSeconds < 60 && randomSong.lengthSeconds > 600) {
         return false;
       }
 

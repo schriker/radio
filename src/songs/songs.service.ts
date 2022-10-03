@@ -154,7 +154,16 @@ export class SongsService {
     }
   }
 
+  async skipBotSong(): Promise<void> {
+    const [currentSong] = await this.current();
+
+    if (currentSong.user === 'RadioPancernik') {
+      await this.skip();
+    }
+  }
+
   async create(newSongData: NewSongInput): Promise<Song> {
+    await this.skipBotSong();
     const song = await this.songsRepository.save(newSongData);
 
     const count = await this.songsRepository
