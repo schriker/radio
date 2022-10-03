@@ -43,7 +43,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     GraphQLModule.forRoot({
       installSubscriptionHandlers: true,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      playground: false,
+      playground: true,
       sortSchema: true,
     }),
     BotModule,

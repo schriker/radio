@@ -35,4 +35,9 @@ export class SongsResolver {
   songSkipped() {
     return this.pubSub.asyncIterator('songSkipped');
   }
+
+  @Subscription(() => [Song])
+  botSongsSkipped() {
+    return this.pubSub.asyncIterator('botSongsSkipped');
+  }
 }

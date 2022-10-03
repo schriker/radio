@@ -36,6 +36,7 @@ input SongHistoryInput {
 }
 
 type Subscription {
+  botSongsSkipped: [Song!]!
   newNotification: NewNotificationInput!
   songAdded: Song!
   songSkipped: Song!

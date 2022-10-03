@@ -154,16 +154,67 @@ export class SongsService {
     }
   }
 
-  async skipBotSong(): Promise<void> {
-    const [currentSong] = await this.current();
+  async skipBotSong(): Promise<boolean> {
+    const songs = await this.songs();
 
-    if (currentSong.user === 'RadioPancernik') {
-      await this.skip();
+    if (songs.every((song) => song.user !== 'RadioPancernik')) {
+      return false;
     }
+
+    const songsToDelete = songs
+      .filter((song) => song.user === 'RadioPancernik')
+      .map((song) => song.id);
+    const songsToSave = songs.filter((song) => song.user !== 'RadioPancernik');
+    await this.songsRepository.delete(songsToDelete);
+
+    const updatedSongs = songsToSave.reduce<Song[]>(
+      (prevValue, currentSong, index) => {
+        const [firstSong] = songs;
+        if (index === 0 && firstSong.user !== 'RadioPancernik') {
+          return [
+            ...prevValue,
+            {
+              ...currentSong,
+              startTime: dayjs(currentSong.startTime) as unknown as Date,
+              endTime: dayjs(currentSong.endTime) as unknown as Date,
+            },
+          ];
+        }
+
+        return [
+          ...prevValue,
+          {
+            ...currentSong,
+            startTime:
+              index === 0
+                ? (dayjs() as unknown as Date)
+                : (dayjs(prevValue[index - 1].endTime) as unknown as Date),
+            endTime:
+              index === 0
+                ? (dayjs().add(
+                    currentSong.lengthSeconds,
+                    'second',
+                  ) as unknown as Date)
+                : (dayjs(dayjs(prevValue[index - 1].endTime)).add(
+                    currentSong.lengthSeconds,
+                    'second',
+                  ) as unknown as Date),
+          },
+        ];
+      },
+      [],
+    );
+
+    await this.songsRepository.save(updatedSongs);
+
+    this.pubSub.publish('botSongsSkipped', {
+      botSongsSkipped: updatedSongs,
+    });
+
+    return true;
   }
 
   async create(newSongData: NewSongInput): Promise<Song> {
-    await this.skipBotSong();
     const song = await this.songsRepository.save(newSongData);
 
     const count = await this.songsRepository
