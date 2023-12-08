@@ -116,11 +116,12 @@ export class BotService {
   async handleCommand(message: CreatedMessage) {
     const isAdmin = this.admins.includes(message.author);
     const isComand = message.body.trim().match(/^\!(\b\w+\b)(\s+\b\d+\b)?/);
+    const isArch = message.author === 'arch';
 
     if (isComand) {
       switch (isComand[1]) {
         case 'next': {
-          if (isAdmin) {
+          if (isAdmin || isArch) {
             this.skipSong();
           }
           break;
