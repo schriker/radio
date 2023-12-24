@@ -50,10 +50,6 @@ export class BotJobsService {
         }
       }
 
-      if (message.author !== 'RadioPancernik') {
-        await this.songsService.skipBotSong();
-      }
-
       let startTime = dayjs();
       let endTime = dayjs().add(data.lengthSeconds, 'second');
       const lastSong = await this.songsService.last(1);
