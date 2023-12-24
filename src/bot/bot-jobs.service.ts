@@ -23,7 +23,7 @@ export class BotJobsService {
   async addSong(link: string, message: CreatedMessage): Promise<string> {
     try {
       const data = await this.youtubeService.getData(link);
-      if (!data.embed || data.removedByTheUploader) {
+      if (!data.embed) {
         return `Tego video nie można embedować.`;
       }
       if (data.playabilityStatus !== 'OK') {
