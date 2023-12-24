@@ -17,6 +17,18 @@ export class YoutubeService {
 
   async getData(id: string): Promise<YouTubeVideo> {
     try {
+      const embedPage = await axios.get(`https://www.youtube.com/embed/${id}`, {
+        headers: {
+          Referer: `https://www.youtube.com/watch?v=${id}`,
+        },
+      });
+      const embedPageMetaData = embedPage.data
+        .split('ytcfg.set(')
+        .pop()
+        .split(');window.ytcfg.')[0];
+      const embedPageObject = JSON.parse(
+        JSON.parse(embedPageMetaData).PLAYER_VARS.embedded_player_response,
+      );
       const page = await axios.get(`https://www.youtube.com/watch?v=${id}`);
       const pageMetadata = page.data
         .split('ytInitialPlayerResponse = ')
@@ -43,7 +55,7 @@ export class YoutubeService {
         viewCount,
         thumbnail,
         embed: true,
-        playabilityStatus: pageMetadataObject.playabilityStatus.status,
+        playabilityStatus: embedPageObject.previewPlayabilityStatus.status,
       };
     } catch (error) {
       console.log(error);

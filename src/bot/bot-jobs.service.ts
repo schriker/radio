@@ -23,11 +23,8 @@ export class BotJobsService {
   async addSong(link: string, message: CreatedMessage): Promise<string> {
     try {
       const data = await this.youtubeService.getData(link);
-      if (!data.embed) {
-        return `Tego video nie można embedować.`;
-      }
       if (data.playabilityStatus !== 'OK') {
-        return `To video ma nałożone ograniczenia wiekowe.`;
+        return `To video ma nałożone ograniczenia wiekowe lub nie można go embedować.`;
       }
       const isAdmin = this.botService.admins.includes(message.author);
       if (!data) {
