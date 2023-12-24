@@ -8,6 +8,8 @@ export interface YouTubeVideo {
   channelId: string;
   viewCount: string;
   playabilityStatus: string;
+  embed: boolean;
+  removedByTheUploader: boolean;
   thumbnail: {
     thumbnails: Thumbnail[];
   };

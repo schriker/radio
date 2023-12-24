@@ -35,7 +35,7 @@ export class BotService {
   ) {
     this.numberToskip = 5;
     // TODO Store admins in database
-    this.admins = ['schriker', 'RadioPancernik'];
+    this.admins = ['schriker', 'RadioPancernik', 'tr0lit'];
     this.client = new Poorchat({
       websocket: this.configService.get<string>('IRC_WS'),
       irc: this.configService.get<string>('IRC'),
